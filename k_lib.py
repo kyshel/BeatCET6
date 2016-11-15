@@ -2,13 +2,12 @@
 
 import sys
 from pprint import pprint
-from PIL import Image,ImageDraw
+from PIL import Image,ImageDraw,ImageChops
 import time
 
 #from __future__ import print_function
 
 class MarkColor:
-
 	def __init__(self,r,g,b,r_bias,g_bias,b_bias):
 		self.r=r
 		self.g=g
@@ -17,6 +16,17 @@ class MarkColor:
 		self.g_bias=g_bias
 		self.b_bias=b_bias
 
+def print_mark_sample_rgb(mark_sample_path):
+	mark_sample = Image.open(mark_sample_path)
+	print(mark_sample.format, mark_sample.size, mark_sample.mode)
+	r,g,b=[],[],[]
+	get_rgb_list(mark_sample,r,g,b)
+	for i in r,g,b:
+		print 'max:',max(i),
+		print 'min:',min(i),
+		print 'avg:',sum(i)/len(i),
+		print 'bias_x(max-avg):',max(i)-sum(i)/len(i),
+		print 'bias_y(avg-min):',sum(i)/len(i)-min(i)
 
 def print_pixel(image):
 	pixel = image.load()
@@ -52,13 +62,12 @@ def get_pairs(infos,distance):
 
 
 def get_cols(image,row_pairs):
-	cols=[]
-	
+	cols=[]	
 	pixel = image.load()
 	for row_pair in row_pairs:
 		col_line=[]
 		for x in xrange(0,image.size[0]):
-			for y in xrange(row_pair[0],row_pair[1]):
+			for y in xrange(row_pair[0],row_pair[1]+1):
 				#print x,y,pixel[x, y]
 				if pixel[x, y]==0:
 					col_line += [x]
@@ -81,8 +90,10 @@ def add_row_line(image,row_pairs):
 
 def get_mark(image,c):
 	image_mark = Image.new("RGB", (image.size[0], image.size[1]),"white")
+	image_de_mark = image.copy()
 	pixel = image.load()
 	pixel_mark = image_mark.load()
+	pixel_de_mark = image_de_mark.load()
 
 	for i in xrange(0,image.size[0]):
 		for j in xrange(0,image.size[1]):
@@ -90,7 +101,11 @@ def get_mark(image,c):
 				if c.g - c.g_bias < pixel[i,j][1] < c.g + c.g_bias :
 					if c.b - c.b_bias < pixel[i,j][2] < c.b + c.b_bias :
 						pixel_mark[i,j] = pixel[i,j]
-	return image_mark
+						pixel_de_mark[i,j] = (255,255,255)
+
+	#return image_mark,image_de_mark
+	return {'mark':image_mark, 'de_mark':image_de_mark}
+
 
 def get_rgb_list(image,r,g,b):
 	pixel = image.load()
@@ -128,3 +143,11 @@ def get_line_height(row_pairs):
 
 	#return sum(pairs_span)/len(pairs_span) # take avg
 	return pairs_span[len(pairs_span)/2] # take median
+
+
+def draw_rectangle(image,crops):
+	draw = ImageDraw.Draw(image)
+	for crops_line in crops:
+		#print crops_line
+		for crop in crops_line:
+			draw.rectangle(crop,outline="black")

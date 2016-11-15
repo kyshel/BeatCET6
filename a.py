@@ -1,66 +1,68 @@
 #!/usr/bin/python
+# >>>>>>>>>>>>>>>>>>>> preload <<<<<<<<<<<<<<<<<<<<<<<<<<<
 execfile("k_lib.py")
 print '>>>>>>>>>>>>>>>',time.strftime('%Y-%m-%d %H:%M:%S'),'<<<<<<<<<<<<<<<<'
 
-line_height_word_space_ratio = 3
-#line_height_line_space_ratio = 0.5
-#line_height_letter_space_ratio = 1
+
+# >>>>>>>>>>>>>>>>>>>> config <<<<<<<<<<<<<<<<<<<<<<<<<<<
+origin_path="a1.jpg"
+
+# - recommend,rgb:121,32,40; bias:10; hereshold:100; ratio:4
+r,g,b=127,32,40
+bias=40
+threshold=100
+line_height_word_space_ratio = 4
+#line_height_line_space_ratio = 8
+#line_height_letter_space_ratio = 50
+
+# - get mark sample rgb
+# mark_sample_path="a_m2.jpg"
+# print_mark_sample_rgb(mark_sample_path)
+
+
 
 # >>>>>>>>>>>>>>>>>>>> main <<<<<<<<<<<<<<<<<<<<<<<<<<<
-origin = Image.open("a1.jpg")
-print(origin.format, origin.size, origin.mode)
-# #print_pixel(origin)
-# bias=40
-# mark_color=MarkColor(121,32,40,bias,bias,bias)
-# mark=get_mark(origin,mark_color)
-# mark.convert("").save("mark.jpg","JPEG")
+origin = Image.open(origin_path)
+print 'origin:',(origin.format, origin.size, origin.mode)
+#print_pixel(origin)
+#mark_color=MarkColor(121,32,40,bias,bias,bias)
+mark_color=MarkColor(r,g,b,bias,bias,bias)
 
-threshold=origin.convert("L").point(lambda x: 0 if x<90 else 255).convert("1")
-print(threshold.format, threshold.size, threshold.mode)
+result=get_mark(origin,mark_color) # time waste
+mark=result['mark']
+de_mark=result['de_mark']
+mark.convert("").save("mark.jpg","JPEG")
+de_mark.convert("").save("de_mark.jpg","JPEG")
 
-rows=get_rows(threshold)
+denoised=de_mark.convert("L").point(lambda x: 0 if x < threshold else 255).convert("1")
+print 'denoised:',(denoised.format, denoised.size, denoised.mode)
+
+rows=get_rows(denoised)
 row_pairs=get_pairs(rows,1)
-# print rows
-# print row_pairs
 
 line_height=get_line_height(row_pairs)
 word_space = line_height / line_height_word_space_ratio
+print 'line_height:',line_height
+print 'word_space:',word_space
 
-print line_height
-print word_space
-
-cols=get_cols(threshold,row_pairs)
+cols=get_cols(denoised,row_pairs)
+#pprint (cols)
 col_pairs=[]
 for col_line in cols:
+	#print col_line
 	col_line_pairs=get_pairs(col_line,word_space)
 	col_pairs+=[col_line_pairs]
-# print(cols)
-# pprint(col_pairs)
 
-# add_row_line(threshold,row_pairs)
+
 
 crops = get_crops()
+draw_rectangle(denoised,crops)
 
-draw = ImageDraw.Draw(threshold)
-for crops_line in crops:
-	#print crops_line
-	for crop in crops_line:
-		draw.rectangle(crop,outline="black")
+denoised.save("cropped.jpg","JPEG")
 
 
 
 
 
-threshold.save("b.jpg","JPEG")
 
 
-
-
-# # get avg rgb, only for a_m2.jpg
-# mark_sample = Image.open("a_m2.jpg")
-# print(mark_sample.format, mark_sample.size, mark_sample.mode)
-# r,g,b=[],[],[]
-# get_rgb_list(mark_sample,r,g,b)
-# for i in r,g,b:
-# 	#print i
-# 	print 'max:',max(i),'min:',min(i),'avg:',sum(i)/len(i)
