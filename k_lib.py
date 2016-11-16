@@ -1,8 +1,10 @@
 #!/usr/bin/python
 
 import sys
+import pytesseract
 from pprint import pprint
 from PIL import Image,ImageDraw,ImageChops
+import tesserocr
 import time
 
 #from __future__ import print_function
@@ -39,6 +41,7 @@ def get_rows(image):
 	pixel = image.load()
 	for y in xrange(0,image.size[1]):
 		for x in xrange(0,image.size[0]):
+			#print pixel[x, y],
 			if pixel[x, y]==0:
 				rows+=[y]
 				break
@@ -90,10 +93,10 @@ def add_row_line(image,row_pairs):
 
 def get_mark(image,c):
 	image_mark = Image.new("RGB", (image.size[0], image.size[1]),"white")
-	image_de_mark = image.copy()
+	image_demark = image.copy()
 	pixel = image.load()
 	pixel_mark = image_mark.load()
-	pixel_de_mark = image_de_mark.load()
+	pixel_de_mark = image_demark.load()
 
 	for i in xrange(0,image.size[0]):
 		for j in xrange(0,image.size[1]):
@@ -103,8 +106,8 @@ def get_mark(image,c):
 						pixel_mark[i,j] = pixel[i,j]
 						pixel_de_mark[i,j] = (255,255,255)
 
-	#return image_mark,image_de_mark
-	return {'mark':image_mark, 'de_mark':image_de_mark}
+	#return image_mark,image_demark
+	return {'mark':image_mark, 'demark':image_demark}
 
 
 def get_rgb_list(image,r,g,b):
@@ -116,7 +119,7 @@ def get_rgb_list(image,r,g,b):
 			b+=[pixel[i,j][2]]
 
 
-def get_crops():
+def get_crops(row_pairs,col_pairs):
 	line = 0
 	
 	crops=[]
@@ -146,8 +149,107 @@ def get_line_height(row_pairs):
 
 
 def draw_rectangle(image,crops):
-	draw = ImageDraw.Draw(image)
+	image_copy=image.copy()
+	draw = ImageDraw.Draw(image_copy)
 	for crops_line in crops:
 		#print crops_line
 		for crop in crops_line:
 			draw.rectangle(crop,outline="black")
+	return image_copy
+
+def draw_rectangle2(image,crops): 
+	image_copy=image.copy()
+	draw = ImageDraw.Draw(image_copy)
+	for crop in crops:
+		draw.rectangle(crop,outline="black")
+	return image_copy
+
+
+def calc_crops(image,threshold,line_height_word_space_ratio):
+	denoise=image.convert("L").point(lambda x: 0 if x < threshold else 255).convert("1")
+	print 'denoise:',(denoise.format, denoise.size, denoise.mode)
+
+	rows=get_rows(denoise)
+	row_pairs=get_pairs(rows,1)
+
+	line_height=get_line_height(row_pairs)
+	word_space = line_height / line_height_word_space_ratio
+	print 'line_height:',line_height
+	print 'word_space:',word_space
+
+	cols=get_cols(denoise,row_pairs)
+	#pprint (cols)
+	col_pairs=[]
+	for col_line in cols:
+		#print col_line
+		col_line_pairs=get_pairs(col_line,word_space)
+		col_pairs+=[col_line_pairs]
+
+	crops = get_crops(row_pairs,col_pairs)
+
+
+	return crops,line_height
+
+
+def calc_crops2(image,threshold,line_height,line_height_word_space_ratio):
+	denoise=image.convert("L").point(lambda x: 0 if x < threshold else 255).convert("1")
+	print 'denoise:',(denoise.format, denoise.size, denoise.mode)
+
+	rows=get_rows(denoise)
+	if rows == []:
+		print 'WARNING: no info in this image!'
+		return
+	row_pairs=get_pairs(rows,1)
+
+	word_space = line_height / line_height_word_space_ratio
+	print 'line_height:',line_height
+	print 'word_space:',word_space
+
+	cols=get_cols(denoise,row_pairs)
+	#pprint (cols)
+	col_pairs=[]
+	for col_line in cols:
+		#print col_line
+		col_line_pairs=get_pairs(col_line,word_space)
+		col_pairs+=[col_line_pairs]
+
+	crops = get_crops(row_pairs,col_pairs)
+
+	return crops
+
+def get_white_copy(image):
+	copy = Image.new("1", (image.size[0], image.size[1]),"white")
+	return copy
+
+def filter_marked_words(image,crops):
+	template=get_white_copy(image)
+	for box in crops:
+		template.paste(demark_denoise.crop(box), box)
+	return template
+
+def list_marked_words(image,crops,line_height):
+	template=get_white_copy(image)
+	i=0
+	for box in crops:
+		position=(20,i*line_height+20)
+		template.paste(demark_denoise.crop(box),position )
+		i=i+1
+	return template
+
+def get_crops_truncate(crops,image):
+	for crop in crops:
+		crop[3]=get_crop_truncate_line(crop,image)
+	return crops
+		
+
+def get_crop_truncate_line(crop,image):	
+	pixel = image.load()
+	for y in xrange((crop[1]+crop[3])/2,crop[3]+1):
+		for x in xrange(crop[0],crop[2]+1):
+			if pixel[x, y]==0:
+				break
+			if x == crop[2]:
+				#print 'xxxxxxxxxxxxxxxxxxxxx'
+				cut_line = y + 1
+				return cut_line
+	return crop[3] # won't excute as common
