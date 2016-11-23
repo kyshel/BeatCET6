@@ -2,7 +2,7 @@
 Identify marked words in photo.  
 For example, if input is a photo like below:    
 ![sample](https://cloud.githubusercontent.com/assets/11898075/20553888/e82d351a-b192-11e6-83bf-306bff76f907.png)  
-The program should output:
+The program will output:
 `water: 水`
 
 ## Introduction
@@ -33,5 +33,5 @@ See [Wiki](https://github.com/kyshel/BeatCET6/edit/wiki)
 - [terryyin/google-translate-python](https://github.com/terryyin/google-translate-python)
 
 ## Credits
-Made with ❤ by Kyshel  
+Made with ❤ by [Kyshel](https://github.com/kyshel)  
 MIT License  
