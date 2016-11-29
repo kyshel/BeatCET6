@@ -1,12 +1,17 @@
 # BeatCET6
-Identify marked words in photo.  
-For example, if input is a photo:    
-![sample](https://cloud.githubusercontent.com/assets/11898075/20553888/e82d351a-b192-11e6-83bf-306bff76f907.png)  
-The program will output:
-`water: 水`
+Identify marked words in photo. 
 
 ## Introduction
 BeatCET6 aims to identify the words marked in photo, and translate them into chinese.
+
+For example, if input is:    
+![sample](https://cloud.githubusercontent.com/assets/11898075/20553888/e82d351a-b192-11e6-83bf-306bff76f907.png)  
+Output will be:
+`water: 水`
+
+## Keywords
+identify mark words, identify underline words, detect, underlined, signed, identify photos
+
 
 ## Example
 1. original photo:
