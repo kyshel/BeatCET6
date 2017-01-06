@@ -29,10 +29,13 @@ identify mark words, identify underline words, detect, underlined, signed, ident
 3. change r,g,b that match your mark color
 4. `python a.py`
 
-## Doc
-See [Wiki](https://github.com/kyshel/BeatCET6/edit/wiki)
+## Require
+` pip install pytesseract `
 
-## Powered By (Require)
+## Doc
+See [Wiki](https://github.com/kyshel/BeatCET6/wiki)
+
+## Powered By 
 - [python-pillow/Pillow](https://github.com/python-pillow/Pillow)
 - [sirfz/tesserocr](https://github.com/sirfz/tesserocr)
 - [terryyin/google-translate-python](https://github.com/terryyin/google-translate-python)
